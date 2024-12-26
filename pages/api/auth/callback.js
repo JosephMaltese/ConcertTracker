@@ -1,8 +1,7 @@
 import cookie from 'cookie';
 
 export default async function handler(req, res) {
-    const clientId = '5d30b8aba0d24d2d82908d26f24fdb95'
-    const clientSecret = '12f8f1ff93784d308914266dc4fd28c2';
+    const clientId = '5d30b8aba0d24d2d82908d26f24fdb95';
     const redirect_uri = 'http://localhost:3000/api/auth/callback';
     const { code } = req.query;
     

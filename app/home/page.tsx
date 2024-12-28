@@ -14,10 +14,6 @@ const page = () => {
     const router = useRouter();
     const [User, setUser] = useState<User | null>(null);
 
-    const getCurrentUser = async () => {
-
-    }
-
     const checkAuth = async () => {
         try { 
             const response = await fetch('/api/auth/verify', {
@@ -31,7 +27,6 @@ const page = () => {
                 window.location.href = '/';
             } else {
                 const user = await response.json();
-                console.log('Fetched user:', user); // Debugging
                 setUser(user.user);
             }
 
@@ -46,14 +41,6 @@ const page = () => {
             checkAuth();
         }, []
     )
-
-    // Log the user object whenever it changes
-    useEffect(() => {
-        if (User) {
-            console.log('User updated:', User);
-            console.log('User display_name:', User.display_name);  // Log specific field to check
-        }
-    }, [User]);
 
     const handleCheckCookies = async () => {
         const cookies = await fetch('/api/cookies', { method: 'GET' });
@@ -83,7 +70,7 @@ const page = () => {
         {User ? (
                 <h1>Welcome, {User.display_name}</h1>
             ) : (
-                <p>Loading user data...</p>  // Fallback loading message
+                <p>Loading user data...</p>
             )}
       <button onClick={handleLogout}>Logout</button>
       <button onClick={handleCheckCookies}>Check Current Cookies</button>

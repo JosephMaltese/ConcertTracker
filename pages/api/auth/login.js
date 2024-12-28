@@ -19,7 +19,7 @@ export default async function handler (req, res) {
 
         const user = await initializeUser({ displayName, email, spotifyId });
 
-        const token = jwt.sign({id : user.id, spotify_id: user.spotify_id, email: user.email}, JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({id : user.id, spotify_id: user.spotify_id, display_name: user.display_name }, JWT_SECRET, { expiresIn: '1h' });
 
         // Set the JWT and Spotify tokens as cookies
         res.setHeader('Set-Cookie', [

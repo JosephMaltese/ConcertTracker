@@ -2,9 +2,21 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+interface User {
+    display_name: string;
+    exp: number;
+    iat: number;
+    id: number;
+    spotify_id: string;
+}
+
 const page = () => {
-    const router = useRouter()
-    const [user, setUser] = useState(null)
+    const router = useRouter();
+    const [User, setUser] = useState<User | null>(null);
+
+    const getCurrentUser = async () => {
+
+    }
 
     const checkAuth = async () => {
         try { 
@@ -19,7 +31,8 @@ const page = () => {
                 window.location.href = '/';
             } else {
                 const user = await response.json();
-                setUser(user);
+                console.log('Fetched user:', user); // Debugging
+                setUser(user.user);
             }
 
         } catch (error) {
@@ -33,6 +46,14 @@ const page = () => {
             checkAuth();
         }, []
     )
+
+    // Log the user object whenever it changes
+    useEffect(() => {
+        if (User) {
+            console.log('User updated:', User);
+            console.log('User display_name:', User.display_name);  // Log specific field to check
+        }
+    }, [User]);
 
     const handleCheckCookies = async () => {
         const cookies = await fetch('/api/cookies', { method: 'GET' });
@@ -59,7 +80,11 @@ const page = () => {
     }
   return (
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-      <h2>Concert Tracker</h2>
+        {User ? (
+                <h1>Welcome, {User.display_name}</h1>
+            ) : (
+                <p>Loading user data...</p>  // Fallback loading message
+            )}
       <button onClick={handleLogout}>Logout</button>
       <button onClick={handleCheckCookies}>Check Current Cookies</button>
     </div>

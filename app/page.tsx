@@ -1,33 +1,7 @@
 'use client'
-import Image from "next/image";
 import React, { useEffect, useState } from 'react';
 
 export default function Home() {
-  const [Loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [Position, setPosition] = useState<GeolocationPosition | null>(null);
-
-  const getUserLocation = async () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        console.log('position:', position);
-        setPosition(position);
-        setLoading(false);
-      }, 
-      (error) => {
-        setError('Unable to retrieve your location');
-        setLoading(false);
-      }
-    );
-
-    } else {
-      setError('Geolocation is not supported by this browser.');
-      setLoading(false);
-    }
-
-  }
-
-  useEffect(() => { getUserLocation() }, []);
 
   const checkAuth = async () => {
     try { 

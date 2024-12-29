@@ -21,5 +21,7 @@ model users {
   spotify_id  String  @unique
   createdAt DateTime @default(now())
   display_name        String  
-  email        String      @unique      
+  email        String      @unique
+  lastKnownLatitude   Decimal?
+  lastKnownLongitude    Decimal?
 }

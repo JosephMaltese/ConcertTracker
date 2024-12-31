@@ -32,7 +32,7 @@ interface Artist {
 
 const page = () => {
     const [User, setUser] = useState<User | null>(null);
-    const [Loading, setLoading] = useState<boolean>(true);
+    const [LoadingConcerts, setLoadingConcerts] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [Position, setPosition] = useState<GeolocationPosition | null>(null);
     const [topartists, setTopartists] = useState<Artist[]>([]);
@@ -159,7 +159,6 @@ const page = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async (position) => {
             setPosition(position);
-            setLoading(false);
 
             const [_, topArtists] = await Promise.all([
                 setLocationInDatabase(position.coords.latitude, position.coords.longitude),
@@ -172,13 +171,13 @@ const page = () => {
             console.log('Fetching concerts!');
             // Get relevant concerts based on location and favourite artists
             const concerts = await getConcerts({ lastKnownLatitude: position.coords.latitude, lastKnownLongitude: position.coords.longitude}, topArtists);
+            setLoadingConcerts(false);
             console.log('Successfully fetched concerts:', concerts);
 
 
           }, 
           async (error: GeolocationPositionError) => {
             setError('Unable to retrieve your location');
-            setLoading(false);
     
             // Should then get concerts based on last known location. If no such location, then get all concerts pertaining to favourite artists.
             const lastKnownLocation = await getLastKnownLocation();
@@ -188,13 +187,13 @@ const page = () => {
             setTopartists(topArtists);
 
             const concerts = await getConcerts({lastKnownLatitude: lastKnownLocation.lastKnownLatitude, lastKnownLongitude: lastKnownLocation.lastKnownLongitude}, topArtists);
+            setLoadingConcerts(false);
             console.log('Successfully fetched concerts:', concerts);
         }
         );
     
         } else {
           setError('Geolocation is not supported by this browser.');
-          setLoading(false);
 
           // Should then get favourite artists
           const topArtists = await getTopArtists();
@@ -202,6 +201,7 @@ const page = () => {
 
           // Get concerts based on favourite artists (ANY LOCATION)
           const concerts = await getConcerts({lastKnownLatitude: null, lastKnownLongitude: null}, topArtists);
+          setLoadingConcerts(false);
           console.log('Successfully fetched concerts:', concerts);
         }
     
@@ -242,16 +242,18 @@ const page = () => {
         <div>
             <Header />
             <div className="flex flex-col justify-center items-center mt-6">
-                {Loading ? (<p>Loading...</p>) : error ? (<p>{error}</p>) : (
+                {!User ? (<span className="loading loading-dots loading-lg"></span>) : error ? (<p>{error}</p>) : (
                     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                        {User && <h2>Welcome, {User.display_name}</h2>}
+                        {User && <h2 className="mb-12 text-2xl">Welcome, {User.display_name}</h2>}
                         <div className="flex flex-col justify-center items-center">
-                            <h2>Nearby Upcoming Concerts Based On Your Favourite Spotify Artists</h2>
-                            {Concerts && Concerts.map((concert, index) => {
+                            <h2 className='mb-4 text-base'>Nearby Upcoming Concerts Based On Your Favourite Spotify Artists</h2>
+                            {!LoadingConcerts ? (<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                {Concerts.map((concert, index) => {
                                 return (<div key={index}>
                                     <Card imageUrl={concert.images[0].url} width={concert.images[0].width} height={concert.images[0].height} eventName={concert.name} venue={concert._embedded.venues[0].name} city={concert._embedded.venues[0].city.name} province={concert._embedded.venues[0].state.stateCode} date={concert.dates.start.localDate} ticketmasterLink={concert.url} />
                                 </div>);
-                            })}
+                                })}
+                            </div>) : (<span className="loading loading-spinner text-primary loading-lg mt-14"></span>) }
                         </div>
                     </div>
                 )}

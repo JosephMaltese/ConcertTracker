@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
 
             const timeRange = 'medium_term';
-            const limit = 20;
+            const limit = 50;
 
             const spotifyResponse = await fetch(`https://api.spotify.com/v1/me/top/artists?time_range=${timeRange}&limit=${limit}`, {
                 headers: {

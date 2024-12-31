@@ -1,6 +1,8 @@
 
-
+Home Page:
 ![Alt Text](/public/homePageUI.png)
+
+Landing Screen:
 ![Alt Text](/public/LandingPageUI.png)
 
 

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 const ngeohash = require('ngeohash');
+import Card from '../components/Card';
 
 interface User {
     display_name: string;
@@ -260,11 +261,19 @@ const page = () => {
   return (
         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
             <h1>Concert Tracker</h1>
+            <button onClick={handleLogout} style={{ position: 'absolute', top: '10px', left: '10px' }} className="btn btn-outline btn-secondary">Logout</button>
             {Loading ? (<p>Loading...</p>) : error ? (<p>{error}</p>) : (
                 <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
                     {User && <h2>Welcome, {User.display_name}</h2>}
-                    <button onClick={handleLogout}>Logout</button>
                     <button onClick={handleCheckCookies}>Check Current Cookies</button>
+                    <div className="flex flex-col justify-center items-center">
+                        <h2>Nearby Upcoming Concerts Based On Your Favourite Spotify Artists</h2>
+                        {Concerts && Concerts.map((concert, index) => {
+                            return (<div key={index}>
+                                <Card imageUrl={concert.images[0].url} width={concert.images[0].width} height={concert.images[0].height} eventName={concert.name} venue={concert._embedded.venues[0].name} city={concert._embedded.venues[0].city.name} province={concert._embedded.venues[0].state.stateCode} date={concert.dates.start.localDate} ticketmasterLink={concert.url} />
+                            </div>);
+                        })}
+                    </div>
                 </div>
             )}
         </div>

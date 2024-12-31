@@ -1,6 +1,7 @@
 'use client'
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+const ngeohash = require('ngeohash');
 
 interface User {
     display_name: string;
@@ -15,13 +16,27 @@ interface Location {
     lastKnownLongitude: number | null;
 }
 
+interface Artist {
+    external_urls: {spotify: string},
+    followers: {href: null, total: number},
+    genres: string[],
+    href: string,
+    id: string,
+    images: {height: number, url: string, width: number}[],
+    name: string,
+    popularity: number,
+    type: string,
+    uri: string
+}
+
 const page = () => {
     const router = useRouter();
     const [User, setUser] = useState<User | null>(null);
-
     const [Loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [Position, setPosition] = useState<GeolocationPosition | null>(null);
+    const [topartists, setTopartists] = useState<Artist[]>([]);
+    const [Concerts, setConcerts] = useState<any[]>([]);
 
     const getLastKnownLocation = async (): Promise<Location> => {
         try {
@@ -67,54 +82,135 @@ const page = () => {
         }
     }
 
-    const getConcerts = async () => {
+    const getConcerts = async (location: Location, topArtists: Artist[]) => {
+        const latitude = location.lastKnownLatitude;
+        const longitude = location.lastKnownLongitude;
 
-    }
+        const geoHash = latitude && longitude ? ngeohash.encode(latitude, longitude) : null;
 
+        const allConcerts = [];
 
+        for (const artist of topArtists) {
+            const artistName = artist.name;
+            try {
+                const attractionId = await getAttractionId(artistName);
+                const response = await fetch(`/api/concerts?attractionId=${attractionId}&geoHash=${geoHash}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }});
+                if (!response.ok) {
+                    console.error(`Failed to fetch concerts for artist ${artist.name}`);
+                    continue; // Skip this artist if there's an error
+                }
+                const data = await response.json();
+                const concerts = data._embedded?.events || [];
+                allConcerts.push(...concerts);
 
-    
-
-    const handleLocationError = async (error: GeolocationPositionError) => {
-        setError('Unable to retrieve your location');
-        setLoading(false);
-
-        // Should then get concerts based on last known location. If no such location, then get all concerts pertaining to favourite artists.
-        const lastKnownLocation = await getLastKnownLocation();
-        if (lastKnownLocation.lastKnownLatitude && lastKnownLocation.lastKnownLongitude) {
-            // Get concerts based on last known location
-        } else {
-            // Get concerts based on favourite artists
+            } catch (error) {
+                console.error('Error getting concerts for artist:', artistName, error);
+            }
         }
-
-
+        setConcerts(allConcerts);
+        return allConcerts;
     }
+
+    const getTopArtists = async () => {
+        const response = await fetch('api/artists', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const artists = await response.json();
+            const artistArray = artists.artists;
+
+            if (Array.isArray(artistArray) && artistArray.length > 0) {
+                return artistArray;
+            }
+        }
+        return [];
+    }
+
+    const getAttractionId = async (artistName: string) => {
+        try {
+            const response = await fetch(`/api/attractions?artistName=${encodeURIComponent(artistName)}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                console.error(`Failed to get attraction ID for artist ${artistName}`);
+                return null;
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error getting attraction ID for artist:', artistName, error);
+            return null;
+        }
+    }
+
 
     const getUserLocation = async () => {
         if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition((position) => {
-            console.log('position:', position);
+            navigator.geolocation.getCurrentPosition(async (position) => {
             setPosition(position);
             setLoading(false);
 
-            // Should then set last known location in database
-            setLocationInDatabase(position.coords.latitude, position.coords.longitude);
+            const [_, topArtists] = await Promise.all([
+                setLocationInDatabase(position.coords.latitude, position.coords.longitude),
+                getTopArtists()
+            ]);
+            console.log('Successfully fetched top artists:', topArtists);
+            setTopartists(topArtists);
+
+
+            console.log('Fetching concerts!');
+            // Get relevant concerts based on location and favourite artists
+            const concerts = await getConcerts({ lastKnownLatitude: position.coords.latitude, lastKnownLongitude: position.coords.longitude}, topArtists);
+            console.log('Successfully fetched concerts:', concerts);
+
+
+          }, 
+          async (error: GeolocationPositionError) => {
+            setError('Unable to retrieve your location');
+            setLoading(false);
+    
+            // Should then get concerts based on last known location. If no such location, then get all concerts pertaining to favourite artists.
+            const lastKnownLocation = await getLastKnownLocation();
 
             // Should then get favourite artists
+            const topArtists = await getTopArtists();
+            setTopartists(topArtists);
 
-            // And then get relevant concerts based on location
-          }, 
-          handleLocationError
+            const concerts = await getConcerts({lastKnownLatitude: lastKnownLocation.lastKnownLatitude, lastKnownLongitude: lastKnownLocation.lastKnownLongitude}, topArtists);
+            console.log('Successfully fetched concerts:', concerts);
+        }
         );
     
         } else {
           setError('Geolocation is not supported by this browser.');
           setLoading(false);
+
+          // Should then get favourite artists
+          const topArtists = await getTopArtists();
+          setTopartists(topArtists);
+
+          // Get concerts based on favourite artists (ANY LOCATION)
+          const concerts = await getConcerts({lastKnownLatitude: null, lastKnownLongitude: null}, topArtists);
+          console.log('Successfully fetched concerts:', concerts);
         }
     
       }
     
-    useEffect(() => { getUserLocation() }, []);
+    useEffect(() => { 
+        checkAuth();
+        getUserLocation();
+    }, []);
 
     const checkAuth = async () => {
         try { 
@@ -137,12 +233,6 @@ const page = () => {
             window.location.href = '/';
         }
     }
-
-    useEffect(
-        () => {
-            checkAuth();
-        }, []
-    )
 
     const handleCheckCookies = async () => {
         const cookies = await fetch('/api/cookies', { method: 'GET' });
@@ -168,19 +258,18 @@ const page = () => {
 
     }
   return (
-    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-        {User ? (
-                <h1>Welcome, {User.display_name}</h1>
-            ) : (
-                <p>Loading user data...</p>
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+            <h1>Concert Tracker</h1>
+            {Loading ? (<p>Loading...</p>) : error ? (<p>{error}</p>) : (
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                    {User && <h2>Welcome, {User.display_name}</h2>}
+                    <button onClick={handleLogout}>Logout</button>
+                    <button onClick={handleCheckCookies}>Check Current Cookies</button>
+                </div>
             )}
-      <button onClick={handleLogout}>Logout</button>
-      <button onClick={handleCheckCookies}>Check Current Cookies</button>
-      {Loading && <p>Loading your location...</p>}
-      {Position && <p>Your location is: Latitude: {Position?.coords.latitude}, Longitude: {Position?.coords.longitude}</p>}
-      {error && <p>{error}</p>}
-    </div>
+        </div>
   )
 }
+
 
 export default page

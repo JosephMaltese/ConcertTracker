@@ -3,7 +3,7 @@ import React from 'react';
 
 const clientId = '5d30b8aba0d24d2d82908d26f24fdb95';
 const redirectUri = 'http://localhost:3000/api/auth/callback';
-const scope = 'user-read-private user-read-email';
+const scope = 'user-top-read user-read-private user-read-email';
 
 const generateRandomString = (length) => {
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

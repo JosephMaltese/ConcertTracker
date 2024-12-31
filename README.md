@@ -1,7 +1,7 @@
 
 
-![Alt Text](homePageUI.png)
-![Alt Text](LandingPageUI.png)
+![Alt Text](/public/homePageUI.png)
+![Alt Text](/public/LandingPageUI.png)
 
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).

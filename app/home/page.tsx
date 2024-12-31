@@ -1,8 +1,8 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 const ngeohash = require('ngeohash');
 import Card from '../components/Card';
+import Header from '../components/Header';
 
 interface User {
     display_name: string;
@@ -31,7 +31,6 @@ interface Artist {
 }
 
 const page = () => {
-    const router = useRouter();
     const [User, setUser] = useState<User | null>(null);
     const [Loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -239,46 +238,29 @@ const page = () => {
         const cookies = await fetch('/api/cookies', { method: 'GET' });
       }
 
-    const handleLogout = async () => {
-        try {
-            const response = await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            if (response.ok) {
-                router.push('/')
-            } else {
-                console.error("Failed to log out")
-            }
-
-        } catch (error) {
-            console.error("An error occurred while logging out", error);
-        }
-
-    }
   return (
-        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-            <h1>Concert Tracker</h1>
-            <button onClick={handleLogout} style={{ position: 'absolute', top: '10px', left: '10px' }} className="btn btn-outline btn-secondary">Logout</button>
-            {Loading ? (<p>Loading...</p>) : error ? (<p>{error}</p>) : (
-                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                    {User && <h2>Welcome, {User.display_name}</h2>}
-                    <button onClick={handleCheckCookies}>Check Current Cookies</button>
-                    <div className="flex flex-col justify-center items-center">
-                        <h2>Nearby Upcoming Concerts Based On Your Favourite Spotify Artists</h2>
-                        {Concerts && Concerts.map((concert, index) => {
-                            return (<div key={index}>
-                                <Card imageUrl={concert.images[0].url} width={concert.images[0].width} height={concert.images[0].height} eventName={concert.name} venue={concert._embedded.venues[0].name} city={concert._embedded.venues[0].city.name} province={concert._embedded.venues[0].state.stateCode} date={concert.dates.start.localDate} ticketmasterLink={concert.url} />
-                            </div>);
-                        })}
+        <div>
+            <Header />
+            <div className="flex flex-col justify-center items-center mt-6">
+                {Loading ? (<p>Loading...</p>) : error ? (<p>{error}</p>) : (
+                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                        {User && <h2>Welcome, {User.display_name}</h2>}
+                        <div className="flex flex-col justify-center items-center">
+                            <h2>Nearby Upcoming Concerts Based On Your Favourite Spotify Artists</h2>
+                            {Concerts && Concerts.map((concert, index) => {
+                                return (<div key={index}>
+                                    <Card imageUrl={concert.images[0].url} width={concert.images[0].width} height={concert.images[0].height} eventName={concert.name} venue={concert._embedded.venues[0].name} city={concert._embedded.venues[0].city.name} province={concert._embedded.venues[0].state.stateCode} date={concert.dates.start.localDate} ticketmasterLink={concert.url} />
+                                </div>);
+                            })}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
   )
 }
 
 
 export default page
+
+// <button onClick={handleCheckCookies}>Check Current Cookies</button>

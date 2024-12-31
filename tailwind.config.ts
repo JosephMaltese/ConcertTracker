@@ -7,7 +7,7 @@ export default {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   daisyui: {
-    themes: ["winter"],
+    themes: ["forest"],
   },
   theme: {
     extend: {

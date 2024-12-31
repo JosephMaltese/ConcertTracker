@@ -47,7 +47,7 @@ const SpotifyLogin = () => {
         window.location.href = authUrl.toString();
     }
 
-    return <button onClick={handleLogin}>Login with Spotify</button>
+    return (<button onClick={handleLogin} className="btn btn-primary">Get Started</button>);
 }
 
 export default SpotifyLogin;
